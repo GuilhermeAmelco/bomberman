@@ -1,90 +1,142 @@
 #include <iostream>
 #include <windows.h>
 #include <conio.h>
+
 using namespace std;
 
 /*
-O que precisa ser definido antes do loop infinito:
-1. Mapa
-
-O que precisa ser reenderizado a cada loop:
-1. Posição do personagem
-2. Bomba
-3. Inimigos
-
-Decidir aqui:
-1. O que cada número vai significar;
-
+MAPA (valores):
 0 - parede dura
 1 - parede frágil
 2 - bomba
 3 - explosão
 4 - inimigo
 5 - personagem
-
-2. O simbolo para cada item;
 */
 
 const int LARGURA = 3;
 const int ALTURA = 3;
 
+/* =========================
+   INPUT
+========================= */
+
+int escuta_tecla()
+{
+  if (_kbhit())
+    return getch();
+
+  return -1;
+}
+
+/* =========================
+   REGRAS
+========================= */
+
+bool pode_mover(int mapa[LARGURA][ALTURA], int x, int y)
+{
+  if (x < 0 || x >= LARGURA)
+    return false;
+
+  if (y < 0 || y >= ALTURA)
+    return false;
+
+  return true;
+}
+
+/* =========================
+   LÓGICA DO JOGADOR
+========================= */
+
+void mover_jogador(int player_position[2], int tecla, int mapa[LARGURA][ALTURA])
+{
+  int x = player_position[0];
+  int y = player_position[1];
+
+  switch (tecla)
+  {
+  case 72:
+    y--;
+    break; // cima
+  case 80:
+    y++;
+    break; // baixo
+  case 75:
+    x--;
+    break; // esquerda
+  case 77:
+    x++;
+    break; // direita
+  }
+
+  if (!pode_mover(mapa, x, y))
+    return;
+
+  player_position[0] = x;
+  player_position[1] = y;
+}
+
+/* =========================
+   RENDER
+========================= */
+
 void desenhar(int mapa[LARGURA][ALTURA], int player_position[2])
 {
-  // função responsável por desenhar: mapa, jogador, bomba, inimigos;
-
-  // desenha o mapa
-  for (int i = 0; i < LARGURA; i++)
+  for (int i = 0; i < ALTURA; i++)
   {
-    for (int j = 0; j < ALTURA; j++)
+    for (int j = 0; j < LARGURA; j++)
     {
-      // fazer logica para printar o player
-
-      if (player_position[0] == i && player_position[1] == j)
+      // desenha jogador por cima do mapa
+      if (player_position[0] == j && player_position[1] == i)
       {
         cout << 5 << " ";
         continue;
       }
+
       cout << mapa[i][j] << " ";
     }
     cout << endl;
   }
 }
 
-void alterna_posicao(int player_position[2])
-{
-  if (_kbhit())
-  {
-    int tecla = getch();
-
-    // fazer um osquestrador que separa o que cada tecla faz
-  }
-}
+/* =========================
+   MAIN
+========================= */
 
 int main()
 {
+  // configuração do console
   HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
+
   CONSOLE_CURSOR_INFO cursorInfo;
   GetConsoleCursorInfo(out, &cursorInfo);
   cursorInfo.bVisible = false;
   SetConsoleCursorInfo(out, &cursorInfo);
-  short int CX = 0, CY = 0;
-  COORD coord;
-  coord.X = CX;
-  coord.Y = CY;
 
+  COORD coord;
+  coord.X = 0;
+  coord.Y = 0;
+
+  // mapa
   int mapa[LARGURA][ALTURA] = {
       {0, 0, 0},
       {0, 0, 0},
       {0, 0, 0}};
 
+  // jogador
   int player_position[2] = {0, 0};
+
+  int tecla;
 
   while (true)
   {
-    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord); // limpa primeiro
+    // limpa tela (reposiciona cursor)
+    SetConsoleCursorPosition(out, coord);
 
-    // desenhar(mapa, player_position, coord);
-    alterna_posicao(player_position);
+    desenhar(mapa, player_position);
+
+    tecla = escuta_tecla();
+    mover_jogador(player_position, tecla, mapa);
   }
 
   return 0;
