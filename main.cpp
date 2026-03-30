@@ -14,6 +14,8 @@ MAPA (valores):
 5 - personagem
 */
 
+const char BLOCO = 219;
+const char BLOCO_CLARO = 177;
 const int LARGURA = 3;
 const int ALTURA = 3;
 
@@ -39,6 +41,9 @@ bool pode_mover(int mapa[LARGURA][ALTURA], int x, int y)
     return false;
 
   if (y < 0 || y >= ALTURA)
+    return false;
+
+  if (mapa[x][y] == 0 || mapa[x][y] == 1 || mapa[x][y] == 2)
     return false;
 
   return true;
@@ -80,20 +85,39 @@ void mover_jogador(int player_position[2], int tecla, int mapa[LARGURA][ALTURA])
    RENDER
 ========================= */
 
-void desenhar(int mapa[LARGURA][ALTURA], int player_position[2])
+void desenhar(int mapa[LARGURA][ALTURA], int player_position[2], HANDLE out)
 {
   for (int i = 0; i < ALTURA; i++)
   {
     for (int j = 0; j < LARGURA; j++)
     {
+      bool isPlayer = (player_position[0] == j && player_position[1] == i);
+
       // desenha jogador por cima do mapa
-      if (player_position[0] == j && player_position[1] == i)
+      if (isPlayer)
       {
-        cout << 5 << " ";
+        SetConsoleTextAttribute(out, 10);
+        cout << BLOCO << BLOCO;
         continue;
       }
 
-      cout << mapa[i][j] << " ";
+      int valor = mapa[i][j];
+
+      switch (valor)
+      {
+      case 0: // bloco
+        SetConsoleTextAttribute(out, 3);
+        cout << BLOCO << BLOCO;
+        break;
+      case 1: // bloco-fragil
+        SetConsoleTextAttribute(out, 3);
+        cout << BLOCO_CLARO << BLOCO_CLARO;
+        break;
+      case 9: // vazio
+        SetConsoleTextAttribute(out, 0);
+        cout << BLOCO << BLOCO;
+        break;
+      }
     }
     cout << endl;
   }
@@ -119,9 +143,9 @@ int main()
 
   // mapa
   int mapa[LARGURA][ALTURA] = {
-      {0, 0, 0},
-      {0, 0, 0},
-      {0, 0, 0}};
+      {9, 9, 1},
+      {9, 0, 9},
+      {9, 9, 9}};
 
   // jogador
   int player_position[2] = {0, 0};
@@ -133,7 +157,7 @@ int main()
     // limpa tela (reposiciona cursor)
     SetConsoleCursorPosition(out, coord);
 
-    desenhar(mapa, player_position);
+    desenhar(mapa, player_position, out);
 
     tecla = escuta_tecla();
     mover_jogador(player_position, tecla, mapa);
