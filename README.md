@@ -54,10 +54,10 @@ Cada número representa um elemento:
 
 O jogador se move usando as setas do teclado:
 
-↑ - 72  
-↓ - 80  
-← - 75  
-→ - 77
+↑ - 72 | w - 119
+↓ - 80 | s - 115
+← - 75 | a - 97
+→ - 77 | d - 100
 
 ---
 

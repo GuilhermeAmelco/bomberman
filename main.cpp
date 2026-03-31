@@ -16,8 +16,8 @@ MAPA (valores):
 
 const char BLOCO = 219;
 const char BLOCO_CLARO = 177;
-const int LARGURA = 3;
-const int ALTURA = 3;
+const int LARGURA = 15;
+const int ALTURA = 11;
 
 /* =========================
    INPUT
@@ -35,7 +35,7 @@ int escuta_tecla()
    REGRAS
 ========================= */
 
-bool pode_mover(int mapa[LARGURA][ALTURA], int x, int y)
+bool pode_mover(int mapa[ALTURA][LARGURA], int x, int y)
 {
   if (x < 0 || x >= LARGURA)
     return false;
@@ -43,7 +43,7 @@ bool pode_mover(int mapa[LARGURA][ALTURA], int x, int y)
   if (y < 0 || y >= ALTURA)
     return false;
 
-  if (mapa[x][y] == 0 || mapa[x][y] == 1 || mapa[x][y] == 2)
+  if (mapa[y][x] == 0 || mapa[y][x] == 1 || mapa[y][x] == 2)
     return false;
 
   return true;
@@ -53,25 +53,21 @@ bool pode_mover(int mapa[LARGURA][ALTURA], int x, int y)
    LÓGICA DO JOGADOR
 ========================= */
 
-void mover_jogador(int player_position[2], int tecla, int mapa[LARGURA][ALTURA])
+void mover_jogador(int player_position[2], int tecla, int mapa[ALTURA][LARGURA])
 {
   int x = player_position[0];
   int y = player_position[1];
 
-  switch (tecla)
+  if (tecla)
   {
-  case 72:
-    y--;
-    break; // cima
-  case 80:
-    y++;
-    break; // baixo
-  case 75:
-    x--;
-    break; // esquerda
-  case 77:
-    x++;
-    break; // direita
+    if (tecla == 72 || tecla == 119)
+      y--;
+    if (tecla == 80 || tecla == 115)
+      y++;
+    if (tecla == 75 || tecla == 97)
+      x--;
+    if (tecla == 77 || tecla == 100)
+      x++;
   }
 
   if (!pode_mover(mapa, x, y))
@@ -85,7 +81,7 @@ void mover_jogador(int player_position[2], int tecla, int mapa[LARGURA][ALTURA])
    RENDER
 ========================= */
 
-void desenhar(int mapa[LARGURA][ALTURA], int player_position[2], HANDLE out)
+void desenhar(int mapa[ALTURA][LARGURA], int player_position[2], HANDLE out)
 {
   for (int i = 0; i < ALTURA; i++)
   {
@@ -142,13 +138,21 @@ int main()
   coord.Y = 0;
 
   // mapa
-  int mapa[LARGURA][ALTURA] = {
-      {9, 9, 1},
-      {9, 0, 9},
-      {9, 9, 9}};
+  int mapa[ALTURA][LARGURA] = {
+      {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+      {0, 9, 9, 1, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 0},
+      {0, 9, 0, 9, 0, 9, 0, 9, 0, 9, 0, 9, 0, 9, 0},
+      {0, 1, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 0},
+      {0, 9, 0, 9, 0, 9, 0, 9, 0, 9, 0, 9, 0, 9, 0},
+      {0, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 0},
+      {0, 9, 0, 9, 0, 9, 0, 9, 0, 9, 0, 9, 0, 9, 0},
+      {0, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 0},
+      {0, 9, 0, 9, 0, 9, 0, 9, 0, 9, 0, 9, 0, 9, 0},
+      {0, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 0},
+      {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
   // jogador
-  int player_position[2] = {0, 0};
+  int player_position[2] = {1, 1};
 
   int tecla;
 
