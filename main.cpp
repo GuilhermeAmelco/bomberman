@@ -15,7 +15,7 @@ MAPA (valores):
 */
 
 const char BLOCO = 219;
-const char BLOCO_CLARO = 177;
+const char BLOCO_CLARO = 176;
 const int LARGURA = 15;
 const int ALTURA = 11;
 
@@ -35,7 +35,7 @@ int escuta_tecla()
    REGRAS
 ========================= */
 
-bool pode_mover(int mapa[ALTURA][LARGURA], int x, int y)
+bool pode_mover(int mapa[ALTURA][LARGURA], int bomba_posicao[2], int x, int y)
 {
   if (x < 0 || x >= LARGURA)
     return false;
@@ -43,20 +43,23 @@ bool pode_mover(int mapa[ALTURA][LARGURA], int x, int y)
   if (y < 0 || y >= ALTURA)
     return false;
 
-  if (mapa[y][x] == 0 || mapa[y][x] == 1 || mapa[y][x] == 2)
+  if (mapa[y][x] == 0 || mapa[y][x] == 1)
+    return false;
+
+  if (bomba_posicao[0] == y && bomba_posicao[1] == x)
     return false;
 
   return true;
 }
 
 /* =========================
-   LÓGICA DO JOGADOR
+   LÓGICA DAS ENTIDADES
 ========================= */
 
-void mover_jogador(int player_position[2], int tecla, int mapa[ALTURA][LARGURA])
+void mover_jogador(int jogador_posicao[2], int bomba_posicao[2], int mapa[ALTURA][LARGURA], int tecla)
 {
-  int x = player_position[0];
-  int y = player_position[1];
+  int x = jogador_posicao[1];
+  int y = jogador_posicao[0];
 
   if (tecla)
   {
@@ -70,24 +73,47 @@ void mover_jogador(int player_position[2], int tecla, int mapa[ALTURA][LARGURA])
       x++;
   }
 
-  if (!pode_mover(mapa, x, y))
+  if (!pode_mover(mapa, bomba_posicao, x, y))
     return;
 
-  player_position[0] = x;
-  player_position[1] = y;
+  jogador_posicao[1] = x;
+  jogador_posicao[0] = y;
+}
+
+void coloca_bomba(int jogador_posicao[2], int bomba_posicao[2], int mapa[ALTURA][LARGURA], int tecla)
+{
+  if (bomba_posicao[0] >= 0 || bomba_posicao[1] >= 0)
+    return;
+
+  if (tecla)
+  {
+    if (tecla == 32)
+    {
+      bomba_posicao[0] = jogador_posicao[0];
+      bomba_posicao[1] = jogador_posicao[1];
+    }
+  }
 }
 
 /* =========================
    RENDER
 ========================= */
 
-void desenhar(int mapa[ALTURA][LARGURA], int player_position[2], HANDLE out)
+void desenhar(int mapa[ALTURA][LARGURA], int jogador_posicao[2], int bomba_posicao[2], HANDLE out)
 {
   for (int i = 0; i < ALTURA; i++)
   {
     for (int j = 0; j < LARGURA; j++)
     {
-      bool isPlayer = (player_position[0] == j && player_position[1] == i);
+      bool isBomb = (bomba_posicao[0] == i && bomba_posicao[1] == j);
+      bool isPlayer = (jogador_posicao[0] == i && jogador_posicao[1] == j);
+
+      if (isBomb)
+      {
+        SetConsoleTextAttribute(out, 5);
+        cout << BLOCO << BLOCO;
+        continue;
+      }
 
       // desenha jogador por cima do mapa
       if (isPlayer)
@@ -123,24 +149,28 @@ void desenhar(int mapa[ALTURA][LARGURA], int player_position[2], HANDLE out)
    MAIN
 ========================= */
 
+// logica da bomba:
+// pode ser uma coordenadas so entao
+//
+
 int main()
 {
   // configuração do console
-  HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
+  HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE); // pega o acesso ao console para poder manipulá-lo
 
-  CONSOLE_CURSOR_INFO cursorInfo;
-  GetConsoleCursorInfo(out, &cursorInfo);
-  cursorInfo.bVisible = false;
-  SetConsoleCursorInfo(out, &cursorInfo);
+  CONSOLE_CURSOR_INFO cursorInfo;         // cria uma variavel com as info do cursor
+  GetConsoleCursorInfo(out, &cursorInfo); // pega as info do cursor
+  cursorInfo.bVisible = false;            // seta o cursor como invisível
+  SetConsoleCursorInfo(out, &cursorInfo); // aplica as alterações
 
-  COORD coord;
+  COORD coord; // coordenadas do console
   coord.X = 0;
   coord.Y = 0;
 
   // mapa
   int mapa[ALTURA][LARGURA] = {
       {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-      {0, 9, 9, 1, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 0},
+      {0, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 0},
       {0, 9, 0, 9, 0, 9, 0, 9, 0, 9, 0, 9, 0, 9, 0},
       {0, 1, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 0},
       {0, 9, 0, 9, 0, 9, 0, 9, 0, 9, 0, 9, 0, 9, 0},
@@ -151,8 +181,9 @@ int main()
       {0, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 0},
       {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
-  // jogador
-  int player_position[2] = {1, 1};
+  // entidades (y, x)
+  int jogador_posicao[2] = {1, 1};
+  int bomba_posicao[2] = {-1, -1};
 
   int tecla;
 
@@ -161,10 +192,11 @@ int main()
     // limpa tela (reposiciona cursor)
     SetConsoleCursorPosition(out, coord);
 
-    desenhar(mapa, player_position, out);
+    desenhar(mapa, jogador_posicao, bomba_posicao, out);
 
     tecla = escuta_tecla();
-    mover_jogador(player_position, tecla, mapa);
+    mover_jogador(jogador_posicao, bomba_posicao, mapa, tecla);
+    coloca_bomba(jogador_posicao, bomba_posicao, mapa, tecla);
   }
 
   return 0;
