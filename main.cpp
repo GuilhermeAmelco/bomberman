@@ -19,6 +19,7 @@ const char BLOCO = 219;
 const char BLOCO_CLARO = 176;
 const int LARGURA = 15;
 const int ALTURA = 11;
+const int MAX_INIMIGOS = 3; // Definindo a quantidade máxima de inimigos
 
 // estados
 const string ESTADO_ATIVA = "ATIVA";
@@ -61,6 +62,18 @@ bool pode_mover(int mapa[ALTURA][LARGURA], int bomba_posicao[2], string bomba_es
 bool bomba_ativa(string bomba_estado)
 {
   return bomba_estado == ESTADO_ATIVA;
+}
+
+bool verificar_morte(int jogador_posicao[2], int inimigos[MAX_INIMIGOS][2])
+{
+  for (int i = 0; i < MAX_INIMIGOS; i++)
+  {
+    if (jogador_posicao[0] == inimigos[i][0] && jogador_posicao[1] == inimigos[i][1])
+    {
+      return true; // Bateu no inimigo!
+    }
+  }
+  return false;
 }
 
 /* =========================
@@ -112,11 +125,42 @@ void explodir_bomba(string &bomba_estado, int &bomba_tempo)
 {
   int tempo_passado = clock() - bomba_tempo;
 
-  if (tempo_passado < 3000)
-    return; // nao passou 3s
+  if (tempo_passado < 2000)
+    return; // nao passou 2s
 
   bomba_estado = ESTADO_DESATIVADA;
   bomba_tempo = 0;
+}
+
+void mover_inimigos(int inimigos[MAX_INIMIGOS][2], int &inimigos_tempo, int bomba_posicao[2], string bomba_estado, int mapa[ALTURA][LARGURA])
+{
+  int tempo_passado = clock() - inimigos_tempo;
+  if (tempo_passado < 350) // nao passou 0.35s
+    return;
+  inimigos_tempo = clock();
+  for (int i = 0; i < MAX_INIMIGOS; i++)
+  {
+    // Escolhe uma direção aleatória (0: cima, 1: baixo, 2: esquerda, 3: direita)
+    int direcao = rand() % 4;
+    int y = inimigos[i][0];
+    int x = inimigos[i][1];
+
+    if (direcao == 0)
+      y--;
+    else if (direcao == 1)
+      y++;
+    else if (direcao == 2)
+      x--;
+    else if (direcao == 3)
+      x++;
+
+    // Verifica se o inimigo pode dar esse passo
+    if (pode_mover(mapa, bomba_posicao, bomba_estado, x, y))
+    {
+      inimigos[i][0] = y;
+      inimigos[i][1] = x;
+    }
+  }
 }
 
 /* =========================
@@ -135,10 +179,16 @@ void atualiza_bomba(int bomba_posicao[2], string &bomba_estado, int &bomba_tempo
     explodir_bomba(bomba_estado, bomba_tempo);
 }
 
+void atualiza_inimigos(int inimigos[MAX_INIMIGOS][2], int &inimigos_tempo, int bomba_posicao[2], string bomba_estado, int mapa[ALTURA][LARGURA])
+{
+  mover_inimigos(inimigos, inimigos_tempo, bomba_posicao, bomba_estado, mapa);
+}
+
 void desenhar(
     int mapa[ALTURA][LARGURA],
     int jogador_posicao[2],
     int bomba_posicao[2], string bomba_estado,
+    int inimigos[MAX_INIMIGOS][2],
     HANDLE out)
 {
   for (int i = 0; i < ALTURA; i++)
@@ -147,10 +197,27 @@ void desenhar(
     {
       bool isBomb = (bomba_posicao[0] == i && bomba_posicao[1] == j && bomba_estado == ESTADO_ATIVA);
       bool isPlayer = (jogador_posicao[0] == i && jogador_posicao[1] == j);
+      bool isEnemy = false;
+
+      for (int k = 0; k < MAX_INIMIGOS; k++)
+      {
+        if (inimigos[k][0] == i && inimigos[k][1] == j)
+        {
+          isEnemy = true;
+          break;
+        }
+      }
 
       if (isBomb)
       {
         SetConsoleTextAttribute(out, 5);
+        cout << BLOCO << BLOCO;
+        continue;
+      }
+
+      if (isEnemy)
+      {
+        SetConsoleTextAttribute(out, 12);
         cout << BLOCO << BLOCO;
         continue;
       }
@@ -225,13 +292,21 @@ int main()
   string bomba_estado = ESTADO_DESATIVADA; // pode ser inativa, ativa e explodindo
   int bomba_tempo = 0;
 
+  // inimigo(s)
+  int inimigos[MAX_INIMIGOS][2] = {
+      {1, 13},
+      {9, 13},
+      {9, 1}};
+  int inimigos_tempo = 0;
+
   int tecla;
+  bool jogo_rodando = true;
 
   // logica tempo
-  const int FPS = 60;
+  const int FPS = 30;
   int tempo_por_segundo = 1000 / FPS;
 
-  while (true)
+  while (jogo_rodando)
   {
     int tempo_inicio = clock();
 
@@ -242,6 +317,7 @@ int main()
         mapa,
         jogador_posicao,
         bomba_posicao, bomba_estado,
+        inimigos,
         out);
 
     tecla = escuta_tecla();
@@ -252,13 +328,28 @@ int main()
     // funcionalidades da bomba
     atualiza_bomba(bomba_posicao, bomba_estado, bomba_tempo, mapa);
 
-    // logica fps
+    // funcionalidades dos inimigos
+    atualiza_inimigos(inimigos, inimigos_tempo, bomba_posicao, bomba_estado, mapa);
+
+    if (verificar_morte(jogador_posicao, inimigos))
+    {
+      jogo_rodando = false;
+    }
+
+    // logica fps - mantem em 30 fps
     int tempo_executado = clock() - tempo_inicio;
     if (tempo_por_segundo > tempo_executado)
     {
       Sleep(tempo_por_segundo - tempo_executado);
     }
   }
+
+  // Tela de Game Over simples
+  system("cls"); // limpa a tela de vez
+  SetConsoleTextAttribute(out, 12);
+  cout << "\n\n   === GAME OVER ===\n";
+  cout << " Voce tocou no inimigo.\n\n";
+  SetConsoleTextAttribute(out, 7); // volta para a cor padrão do console
 
   return 0;
 }
