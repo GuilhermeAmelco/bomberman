@@ -168,6 +168,25 @@ void limpar_explosao(int mapa[ALTURA][LARGURA], int bomba_posicao[2], string &bo
   bomba_posicao[1] = -1;
 }
 
+/* =========================
+   RENDER
+========================= */
+
+void atualiza_jogador(int jogador_posicao[2], int bomba_posicao[2], string &bomba_estado, int &bomba_tempo, int mapa[ALTURA][LARGURA], int tecla)
+{
+  mover_jogador(jogador_posicao, bomba_posicao, bomba_estado, mapa, tecla);
+  coloca_bomba(jogador_posicao, bomba_posicao, bomba_estado, bomba_tempo, tecla);
+}
+
+void atualiza_bomba(int bomba_posicao[2], string &bomba_estado, int &bomba_tempo, int mapa[ALTURA][LARGURA])
+{
+  if (bomba_estado == ESTADO_ATIVA)
+    explodir_bomba(mapa, bomba_posicao, bomba_estado, bomba_tempo);
+
+  if (bomba_estado == ESTADO_EXPLODINDO)
+    limpar_explosao(mapa, bomba_posicao, bomba_estado, bomba_tempo);
+}
+
 void atualiza_inimigo(int inimigo_posicao[2], bool &inimigo_vivo, int mapa[ALTURA][LARGURA], int bomba_posicao[2], string bomba_estado, int &tempo_inimigo)
 {
   if (!inimigo_vivo)
@@ -212,25 +231,6 @@ void atualiza_inimigo(int inimigo_posicao[2], bool &inimigo_vivo, int mapa[ALTUR
 
   inimigo_posicao[1] = x;
   inimigo_posicao[0] = y;
-}
-
-/* =========================
-   RENDER
-========================= */
-
-void atualiza_jogador(int jogador_posicao[2], int bomba_posicao[2], string &bomba_estado, int &bomba_tempo, int mapa[ALTURA][LARGURA], int tecla)
-{
-  mover_jogador(jogador_posicao, bomba_posicao, bomba_estado, mapa, tecla);
-  coloca_bomba(jogador_posicao, bomba_posicao, bomba_estado, bomba_tempo, tecla);
-}
-
-void atualiza_bomba(int bomba_posicao[2], string &bomba_estado, int &bomba_tempo, int mapa[ALTURA][LARGURA])
-{
-  if (bomba_estado == ESTADO_ATIVA)
-    explodir_bomba(mapa, bomba_posicao, bomba_estado, bomba_tempo);
-
-  if (bomba_estado == ESTADO_EXPLODINDO)
-    limpar_explosao(mapa, bomba_posicao, bomba_estado, bomba_tempo);
 }
 
 void desenhar(
@@ -338,12 +338,14 @@ int main()
   string bomba_estado = ESTADO_DESATIVADA;
   int bomba_tempo = 0;
 
-  const int FPS = 60;
+  const int FPS = 25;
   int tempo_por_segundo = 1000 / FPS;
 
   while (jogador_vivo)
   {
     SetConsoleCursorPosition(out, coord);
+
+    int tempo_inicio = clock();
 
     desenhar(
         mapa,
@@ -371,9 +373,12 @@ int main()
     if (!inimigo_vivo)
       break;
 
-    // 30 fps / 60 fps
-    // TODO ajustar o frame por segundo
-    Sleep(tempo_por_segundo);
+    int tempo_passado = clock() - tempo_inicio;
+    if (tempo_passado < tempo_por_segundo)
+    {
+      int tempo_adiantado = tempo_por_segundo - tempo_passado;
+      Sleep(tempo_adiantado);
+    }
   }
 
   SetConsoleCursorPosition(out, coord);
