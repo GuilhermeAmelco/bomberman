@@ -20,9 +20,9 @@ const unsigned char BLOCO = 219;
 const unsigned char BLOCO_CLARO = 176;
 const int LARGURA = 15;
 const int ALTURA = 11;
-const int TEMPO_BOMBA = 3000;
+const int TEMPO_BOMBA = 2000;
 const int TEMPO_EXPLOSAO = 500;
-const int TEMPO_INIMIGO = 500;
+const int TEMPO_INIMIGO = 750;
 
 // estados
 const string ESTADO_ATIVA = "ATIVA";
@@ -67,6 +67,18 @@ bool bomba_ativa(string bomba_estado)
   return bomba_estado == ESTADO_ATIVA;
 }
 
+bool todos_inimigos_morrem(bool inimigos_vivo[3])
+{
+  int contador = 0;
+  for (int i = 0; i < 3; i++)
+  {
+    if (!inimigos_vivo[i])
+      contador++;
+  }
+
+  return contador == 3;
+}
+
 /* =========================
    LOGICA DAS ENTIDADES
 ========================= */
@@ -97,7 +109,7 @@ void mover_jogador(int jogador_posicao[2], int bomba_posicao[2], string bomba_es
 
 void coloca_bomba(int jogador_posicao[2], int bomba_posicao[2], string &bomba_estado, int &bomba_tempo, int tecla)
 {
-  if (bomba_ativa(bomba_estado))
+  if (bomba_ativa(bomba_estado) || bomba_estado == ESTADO_EXPLODINDO)
     return;
 
   if (tecla)
@@ -187,7 +199,7 @@ void atualiza_bomba(int bomba_posicao[2], string &bomba_estado, int &bomba_tempo
     limpar_explosao(mapa, bomba_posicao, bomba_estado, bomba_tempo);
 }
 
-void atualiza_inimigo(int inimigo_posicao[2], bool &inimigo_vivo, int mapa[ALTURA][LARGURA], int bomba_posicao[2], string bomba_estado, int &tempo_inimigo)
+void atualiza_inimigo(int inimigo_posicao[2], bool &inimigo_vivo, int mapa[ALTURA][LARGURA], int bomba_posicao[2], string bomba_estado, DWORD &tempo_inimigo)
 {
   if (!inimigo_vivo)
     return;
@@ -233,10 +245,22 @@ void atualiza_inimigo(int inimigo_posicao[2], bool &inimigo_vivo, int mapa[ALTUR
   inimigo_posicao[0] = y;
 }
 
+void verifica_mortes(int jogador_posicao[2], bool &jogador_vivo, int inimigo_posicao[2], bool &inimigo_vivo, int mapa[ALTURA][LARGURA])
+{
+  if (mapa[jogador_posicao[0]][jogador_posicao[1]] == 3)
+    jogador_vivo = false;
+
+  if (inimigo_vivo && mapa[inimigo_posicao[0]][inimigo_posicao[1]] == 3)
+    inimigo_vivo = false;
+
+  if (inimigo_vivo && inimigo_posicao[0] == jogador_posicao[0] && inimigo_posicao[1] == jogador_posicao[1])
+    jogador_vivo = false;
+}
+
 void desenhar(
     int mapa[ALTURA][LARGURA],
     int jogador_posicao[2],
-    int inimigo_posicao[2], bool inimigo_vivo,
+    int inimigo_posicao[3][2], bool inimigo_vivo[3],
     int bomba_posicao[2], string bomba_estado,
     HANDLE out)
 {
@@ -246,7 +270,14 @@ void desenhar(
     {
       bool isBomb = (bomba_posicao[0] == i && bomba_posicao[1] == j && bomba_estado == ESTADO_ATIVA);
       bool isPlayer = (jogador_posicao[0] == i && jogador_posicao[1] == j);
-      bool isEnemy = (inimigo_vivo && inimigo_posicao[0] == i && inimigo_posicao[1] == j);
+      bool isEnemy = false;
+
+      for (int k = 0; k < 3; k++)
+      {
+        isEnemy = inimigo_posicao[k][0] == i && inimigo_posicao[k][1] == j && inimigo_vivo[k];
+        if (isEnemy)
+          break;
+      }
 
       if (isBomb)
       {
@@ -330,9 +361,12 @@ int main()
   int jogador_posicao[2] = {1, 1};
   bool jogador_vivo = true;
 
-  int inimigo_posicao[2] = {1, 13};
-  bool inimigo_vivo = true;
-  int tempo_inimigo = GetTickCount();
+  int inimigo_posicao[3][2] = {
+      {1, 13},
+      {9, 13},
+      {9, 1}};
+  bool inimigo_vivo[3] = {true, true, true};
+  DWORD tempo_inimigo[3] = {GetTickCount(), GetTickCount(), GetTickCount()};
 
   int bomba_posicao[2] = {-1, -1};
   string bomba_estado = ESTADO_DESATIVADA;
@@ -341,7 +375,7 @@ int main()
   const int FPS = 25;
   int tempo_por_segundo = 1000 / FPS;
 
-  while (jogador_vivo)
+  while (jogador_vivo && !todos_inimigos_morrem(inimigo_vivo))
   {
     SetConsoleCursorPosition(out, coord);
 
@@ -358,20 +392,17 @@ int main()
 
     atualiza_jogador(jogador_posicao, bomba_posicao, bomba_estado, bomba_tempo, mapa, tecla);
     atualiza_bomba(bomba_posicao, bomba_estado, bomba_tempo, mapa);
-    atualiza_inimigo(inimigo_posicao, inimigo_vivo, mapa, bomba_posicao, bomba_estado, tempo_inimigo);
 
-    // logica da morte da explosao
-    if (mapa[jogador_posicao[0]][jogador_posicao[1]] == 3)
-      jogador_vivo = false;
+    for (int i = 0; i < 3; i++)
+    {
+      atualiza_inimigo(inimigo_posicao[i], inimigo_vivo[i], mapa, bomba_posicao, bomba_estado, tempo_inimigo[i]);
+    }
 
-    if (inimigo_vivo && mapa[inimigo_posicao[0]][inimigo_posicao[1]] == 3)
-      inimigo_vivo = false;
-
-    if (inimigo_vivo && inimigo_posicao[0] == jogador_posicao[0] && inimigo_posicao[1] == jogador_posicao[1])
-      jogador_vivo = false;
-
-    if (!inimigo_vivo)
-      break;
+    // logica das mortes
+    for (int i = 0; i < 3; i++)
+    {
+      verifica_mortes(jogador_posicao, jogador_vivo, inimigo_posicao[i], inimigo_vivo[i], mapa);
+    }
 
     int tempo_passado = clock() - tempo_inicio;
     if (tempo_passado < tempo_por_segundo)
@@ -390,7 +421,7 @@ int main()
       out);
 
   SetConsoleTextAttribute(out, 15);
-  if (jogador_vivo && !inimigo_vivo)
+  if (jogador_vivo && todos_inimigos_morrem(inimigo_vivo))
     cout << "\nVOCE VENCEU!\n";
   else
     cout << "\nVOCE PERDEU!\n";
