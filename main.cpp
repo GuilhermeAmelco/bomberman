@@ -4,6 +4,7 @@
 #include <string.h>
 #include <ctime>
 
+#include "config.h"
 #include "regras.h"
 
 using namespace std;
