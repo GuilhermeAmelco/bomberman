@@ -2,18 +2,17 @@
 #define REGRAS_H
 
 #include <string>
+#include <config.h>
 
 using namespace std;
 
 extern const int LARGURA;
 extern const int ALTURA;
 
-extern const string ESTADO_ATIVA;
-
 bool pode_mover(
     int mapa[ALTURA][LARGURA],
     int bomba_posicao[2],
-    string bomba_estado,
+    ESTADO_BOMBA bomba_estado,
     int x,
     int y);
 

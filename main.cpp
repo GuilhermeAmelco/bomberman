@@ -19,19 +19,6 @@ MAPA (valores):
 5 - personagem
 */
 
-const unsigned char BLOCO = 219;
-const unsigned char BLOCO_CLARO = 176;
-const int LARGURA = 15;
-const int ALTURA = 11;
-const int TEMPO_BOMBA = 3000;
-const int TEMPO_EXPLOSAO = 500;
-const int TEMPO_INIMIGO = 500;
-
-// estados
-const string ESTADO_ATIVA = "ATIVA";
-const string ESTADO_DESATIVADA = "INATIVA";
-const string ESTADO_EXPLODINDO = "EXPLODINDO";
-
 /* =========================
    INPUT
 ========================= */
@@ -48,48 +35,7 @@ int escuta_tecla()
    LOGICA DAS ENTIDADES
 ========================= */
 
-void mover_jogador(int jogador_posicao[2], int bomba_posicao[2], string bomba_estado, int mapa[ALTURA][LARGURA], int tecla)
-{
-  int x = jogador_posicao[1];
-  int y = jogador_posicao[0];
-
-  if (tecla)
-  {
-    if (tecla == 72 || tecla == 119)
-      y--;
-    if (tecla == 80 || tecla == 115)
-      y++;
-    if (tecla == 75 || tecla == 97)
-      x--;
-    if (tecla == 77 || tecla == 100)
-      x++;
-  }
-
-  if (!pode_mover(mapa, bomba_posicao, bomba_estado, x, y))
-    return;
-
-  jogador_posicao[1] = x;
-  jogador_posicao[0] = y;
-}
-
-void coloca_bomba(int jogador_posicao[2], int bomba_posicao[2], string &bomba_estado, int &bomba_tempo, int tecla)
-{
-  if (bomba_ativa(bomba_estado))
-    return;
-
-  if (tecla)
-  {
-    if (tecla == 32)
-    {
-      bomba_posicao[0] = jogador_posicao[0];
-      bomba_posicao[1] = jogador_posicao[1];
-      bomba_estado = ESTADO_ATIVA;
-      bomba_tempo = GetTickCount();
-    }
-  }
-}
-
-void explodir_bomba(int mapa[ALTURA][LARGURA], int bomba_posicao[2], string &bomba_estado, int &bomba_tempo)
+void explodir_bomba(int mapa[ALTURA][LARGURA], int bomba_posicao[2], ESTADO_BOMBA &bomba_estado, int &bomba_tempo)
 {
   int tempo_passado = GetTickCount() - bomba_tempo;
 
@@ -113,11 +59,11 @@ void explodir_bomba(int mapa[ALTURA][LARGURA], int bomba_posicao[2], string &bom
     mapa[l][c] = 3;
   }
 
-  bomba_estado = ESTADO_EXPLODINDO;
+  bomba_estado = ESTADO_BOMBA::EXPLODINDO;
   bomba_tempo = GetTickCount();
 }
 
-void limpar_explosao(int mapa[ALTURA][LARGURA], int bomba_posicao[2], string &bomba_estado, int &bomba_tempo)
+void limpar_explosao(int mapa[ALTURA][LARGURA], int bomba_posicao[2], ESTADO_BOMBA &bomba_estado, int &bomba_tempo)
 {
   int tempo_passado = GetTickCount() - bomba_tempo;
 
@@ -139,13 +85,13 @@ void limpar_explosao(int mapa[ALTURA][LARGURA], int bomba_posicao[2], string &bo
       mapa[l][c] = 9;
   }
 
-  bomba_estado = ESTADO_DESATIVADA;
+  bomba_estado = ESTADO_BOMBA::INATIVA;
   bomba_tempo = 0;
   bomba_posicao[0] = -1;
   bomba_posicao[1] = -1;
 }
 
-void atualiza_inimigo(int inimigo_posicao[2], bool &inimigo_vivo, int mapa[ALTURA][LARGURA], int bomba_posicao[2], string bomba_estado, int &tempo_inimigo)
+void atualiza_inimigo(int inimigo_posicao[2], bool &inimigo_vivo, int mapa[ALTURA][LARGURA], int bomba_posicao[2], ESTADO_BOMBA bomba_estado, int &tempo_inimigo)
 {
   if (!inimigo_vivo)
     return;
@@ -195,18 +141,12 @@ void atualiza_inimigo(int inimigo_posicao[2], bool &inimigo_vivo, int mapa[ALTUR
    RENDER
 ========================= */
 
-void atualiza_jogador(int jogador_posicao[2], int bomba_posicao[2], string &bomba_estado, int &bomba_tempo, int mapa[ALTURA][LARGURA], int tecla)
+void atualiza_bomba(int bomba_posicao[2], ESTADO_BOMBA &bomba_estado, int &bomba_tempo, int mapa[ALTURA][LARGURA])
 {
-  mover_jogador(jogador_posicao, bomba_posicao, bomba_estado, mapa, tecla);
-  coloca_bomba(jogador_posicao, bomba_posicao, bomba_estado, bomba_tempo, tecla);
-}
-
-void atualiza_bomba(int bomba_posicao[2], string &bomba_estado, int &bomba_tempo, int mapa[ALTURA][LARGURA])
-{
-  if (bomba_estado == ESTADO_ATIVA)
+  if (bomba_estado == ESTADO_BOMBA::ATIVA)
     explodir_bomba(mapa, bomba_posicao, bomba_estado, bomba_tempo);
 
-  if (bomba_estado == ESTADO_EXPLODINDO)
+  if (bomba_estado == ESTADO_BOMBA::EXPLODINDO)
     limpar_explosao(mapa, bomba_posicao, bomba_estado, bomba_tempo);
 }
 
@@ -214,14 +154,14 @@ void desenhar(
     int mapa[ALTURA][LARGURA],
     int jogador_posicao[2],
     int inimigo_posicao[2], bool inimigo_vivo,
-    int bomba_posicao[2], string bomba_estado,
+    int bomba_posicao[2], ESTADO_BOMBA bomba_estado,
     HANDLE out)
 {
   for (int i = 0; i < ALTURA; i++)
   {
     for (int j = 0; j < LARGURA; j++)
     {
-      bool isBomb = (bomba_posicao[0] == i && bomba_posicao[1] == j && bomba_estado == ESTADO_ATIVA);
+      bool isBomb = (bomba_posicao[0] == i && bomba_posicao[1] == j && bomba_estado == ESTADO_BOMBA::ATIVA);
       bool isPlayer = (jogador_posicao[0] == i && jogador_posicao[1] == j);
       bool isEnemy = (inimigo_vivo && inimigo_posicao[0] == i && inimigo_posicao[1] == j);
 
@@ -312,7 +252,7 @@ int main()
   int tempo_inimigo = GetTickCount();
 
   int bomba_posicao[2] = {-1, -1};
-  string bomba_estado = ESTADO_DESATIVADA;
+  string bomba_estado = ESTADO_BOMBA::INATIVA;
   int bomba_tempo = 0;
 
   const int FPS = 60;
