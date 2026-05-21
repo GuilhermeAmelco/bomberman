@@ -4,8 +4,9 @@
 #include <string.h>
 #include <ctime>
 
-#include "config.h"
-#include "regras.h"
+#include "player.h"
+#include "bomba.h"
+#include "inimigo.h"
 
 using namespace std;
 
@@ -32,123 +33,8 @@ int escuta_tecla()
 }
 
 /* =========================
-   LOGICA DAS ENTIDADES
-========================= */
-
-void explodir_bomba(int mapa[ALTURA][LARGURA], int bomba_posicao[2], ESTADO_BOMBA &bomba_estado, int &bomba_tempo)
-{
-  int tempo_passado = GetTickCount() - bomba_tempo;
-
-  if (tempo_passado < TEMPO_BOMBA)
-    return;
-
-  int dl[5] = {0, 0, 0, 1, -1};
-  int dc[5] = {0, 1, -1, 0, 0};
-
-  for (int i = 0; i < 5; i++)
-  {
-    int l = bomba_posicao[0] + dl[i];
-    int c = bomba_posicao[1] + dc[i];
-
-    if (l < 0 || l >= ALTURA || c < 0 || c >= LARGURA)
-      continue;
-
-    if (mapa[l][c] == 0)
-      continue;
-
-    mapa[l][c] = 3;
-  }
-
-  bomba_estado = ESTADO_BOMBA::EXPLODINDO;
-  bomba_tempo = GetTickCount();
-}
-
-void limpar_explosao(int mapa[ALTURA][LARGURA], int bomba_posicao[2], ESTADO_BOMBA &bomba_estado, int &bomba_tempo)
-{
-  int tempo_passado = GetTickCount() - bomba_tempo;
-
-  if (tempo_passado < TEMPO_EXPLOSAO)
-    return;
-
-  int dl[5] = {0, 0, 0, 1, -1};
-  int dc[5] = {0, 1, -1, 0, 0};
-
-  for (int i = 0; i < 5; i++)
-  {
-    int l = bomba_posicao[0] + dl[i];
-    int c = bomba_posicao[1] + dc[i];
-
-    if (l < 0 || l >= ALTURA || c < 0 || c >= LARGURA)
-      continue;
-
-    if (mapa[l][c] == 3)
-      mapa[l][c] = 9;
-  }
-
-  bomba_estado = ESTADO_BOMBA::INATIVA;
-  bomba_tempo = 0;
-  bomba_posicao[0] = -1;
-  bomba_posicao[1] = -1;
-}
-
-void atualiza_inimigo(int inimigo_posicao[2], bool &inimigo_vivo, int mapa[ALTURA][LARGURA], int bomba_posicao[2], ESTADO_BOMBA bomba_estado, int &tempo_inimigo)
-{
-  if (!inimigo_vivo)
-    return;
-
-  if (mapa[inimigo_posicao[0]][inimigo_posicao[1]] == 3)
-  {
-    inimigo_vivo = false;
-    return;
-  }
-
-  if (GetTickCount() - tempo_inimigo < TEMPO_INIMIGO)
-    return;
-
-  tempo_inimigo = GetTickCount();
-
-  int x = inimigo_posicao[1];
-  int y = inimigo_posicao[0];
-  int dir = rand() % 4;
-  int passos = 1 + rand() % 3;
-
-  for (int i = 0; i < passos; i++)
-  {
-    int novo_x = x;
-    int novo_y = y;
-
-    if (dir == 0)
-      novo_y--;
-    if (dir == 1)
-      novo_y++;
-    if (dir == 2)
-      novo_x--;
-    if (dir == 3)
-      novo_x++;
-
-    if (!pode_mover(mapa, bomba_posicao, bomba_estado, novo_x, novo_y))
-      break;
-
-    x = novo_x;
-    y = novo_y;
-  }
-
-  inimigo_posicao[1] = x;
-  inimigo_posicao[0] = y;
-}
-
-/* =========================
    RENDER
 ========================= */
-
-void atualiza_bomba(int bomba_posicao[2], ESTADO_BOMBA &bomba_estado, int &bomba_tempo, int mapa[ALTURA][LARGURA])
-{
-  if (bomba_estado == ESTADO_BOMBA::ATIVA)
-    explodir_bomba(mapa, bomba_posicao, bomba_estado, bomba_tempo);
-
-  if (bomba_estado == ESTADO_BOMBA::EXPLODINDO)
-    limpar_explosao(mapa, bomba_posicao, bomba_estado, bomba_tempo);
-}
 
 void desenhar(
     int mapa[ALTURA][LARGURA],

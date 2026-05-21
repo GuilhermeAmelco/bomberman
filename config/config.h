@@ -20,15 +20,4 @@ enum class ESTADO_BOMBA
   EXPLODINDO
 }
 
-struct Inimigo
-{
-  int x, int y;
-};
-
-struct Bomba
-{
-  int range = 1, tempo = 3000, tempo_explosa = 500;
-  ESTADO_BOMBA estado = ESTADO_BOMBA::INATIVA;
-};
-
 #endif

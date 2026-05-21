@@ -1,12 +1,7 @@
 #include <iostream>
-
 #include <regras.h>
 
-struct Jogador
-{
-  int x = 1, y = 1;
-  bool vivo = true;
-};
+using namespace std;
 
 void mover_jogador(int jogador_posicao[2], int bomba_posicao[2], ESTADO_BOMBA bomba_estado, int mapa[ALTURA][LARGURA], int tecla)
 {
