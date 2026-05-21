@@ -4,9 +4,9 @@
 #include <string.h>
 #include <ctime>
 
-#include "player.h"
-#include "bomba.h"
-#include "inimigo.h"
+#include "entidades/player.h"
+#include "entidades/bomba.h"
+#include "entidades/inimigo.h"
 
 using namespace std;
 

@@ -1,7 +1,7 @@
+#include "../config/config.h"
+
 #ifndef BOMBA_H
 #define BOMBA_H
-
-#include <config.h>
 
 extern const int LARGURA;
 extern const int ALTURA;

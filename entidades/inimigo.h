@@ -1,7 +1,7 @@
+#include "../config/config.h"
+
 #ifndef INIMIGO_H
 #define INIMIGO_H
-
-#include <config.h>
 
 extern const int LARGURA;
 extern const int ALTURA;

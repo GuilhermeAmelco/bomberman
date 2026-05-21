@@ -1,7 +1,7 @@
+#include "../config/config.h"
+
 #ifndef PLAYER_H
 #define PLAYER_H
-
-#include <config.h>
 
 extern const int LARGURA;
 extern const int ALTURA;
