@@ -8,7 +8,9 @@ extern const int ALTURA;
 
 struct Inimigo
 {
-  int x, int y;
+  int x, y;
 };
 
 void atualiza_inimigo(int inimigo_posicao[2], bool &inimigo_vivo, int mapa[ALTURA][LARGURA], int bomba_posicao[2], ESTADO_BOMBA bomba_estado, int &tempo_inimigo);
+
+#endif

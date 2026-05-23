@@ -1,5 +1,6 @@
 #include <iostream>
-#include <regras.h>
+#include <windows.h>
+#include "../config/regras.h"
 
 using namespace std;
 

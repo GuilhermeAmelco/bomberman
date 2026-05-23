@@ -1,7 +1,7 @@
 #ifndef REGRAS_H
 #define REGRAS_H
 
-#include <config.h>
+#include "./config.h"
 
 using namespace std;
 
@@ -15,6 +15,6 @@ bool pode_mover(
     int x,
     int y);
 
-bool bomba_ativa(string bomba_estado);
+bool bomba_ativa(ESTADO_BOMBA bomba_estado);
 
 #endif

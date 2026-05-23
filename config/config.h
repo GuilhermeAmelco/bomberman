@@ -18,6 +18,6 @@ enum class ESTADO_BOMBA
   ATIVA,
   INATIVA,
   EXPLODINDO
-}
+};
 
 #endif

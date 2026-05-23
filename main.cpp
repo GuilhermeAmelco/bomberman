@@ -138,7 +138,7 @@ int main()
   int tempo_inimigo = GetTickCount();
 
   int bomba_posicao[2] = {-1, -1};
-  string bomba_estado = ESTADO_BOMBA::INATIVA;
+  ESTADO_BOMBA bomba_estado = ESTADO_BOMBA::INATIVA;
   int bomba_tempo = 0;
 
   const int FPS = 60;

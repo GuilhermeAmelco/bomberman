@@ -1,9 +1,10 @@
 #include "regras.h"
+#include "./config.h"
 
 bool pode_mover(
     int mapa[ALTURA][LARGURA],
     int bomba_posicao[2],
-    string bomba_estado,
+    ESTADO_BOMBA bomba_estado,
     int x,
     int y)
 {
@@ -19,7 +20,7 @@ bool pode_mover(
   if (
       bomba_posicao[0] == y &&
       bomba_posicao[1] == x &&
-      bomba_estado == ESTADO_ATIVA)
+      bomba_estado == ESTADO_BOMBA::ATIVA)
   {
     return false;
   }
@@ -27,7 +28,7 @@ bool pode_mover(
   return true;
 }
 
-bool bomba_ativa(string bomba_estado)
+bool bomba_ativa(ESTADO_BOMBA bomba_estado)
 {
-  return bomba_estado == ESTADO_ATIVA;
+  return bomba_estado == ESTADO_BOMBA::ATIVA;
 }
