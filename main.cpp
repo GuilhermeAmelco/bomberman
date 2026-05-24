@@ -4,6 +4,10 @@
 #include <string.h>
 #include <ctime>
 
+#include "entidades/player.h"
+#include "entidades/bomba.h"
+#include "entidades/inimigo.h"
+
 using namespace std;
 
 /*
@@ -15,19 +19,6 @@ MAPA (valores):
 4 - inimigo
 5 - personagem
 */
-
-const unsigned char BLOCO = 219;
-const unsigned char BLOCO_CLARO = 176;
-const int LARGURA = 15;
-const int ALTURA = 11;
-const int TEMPO_BOMBA = 2000;
-const int TEMPO_EXPLOSAO = 500;
-const int TEMPO_INIMIGO = 750;
-
-// estados
-const string ESTADO_ATIVA = "ATIVA";
-const string ESTADO_DESATIVADA = "INATIVA";
-const string ESTADO_EXPLODINDO = "EXPLODINDO";
 
 /* =========================
    INPUT
@@ -42,242 +33,23 @@ int escuta_tecla()
 }
 
 /* =========================
-   REGRAS
-========================= */
-
-bool pode_mover(int mapa[ALTURA][LARGURA], int bomba_posicao[2], string bomba_estado, int x, int y)
-{
-  if (x < 0 || x >= LARGURA)
-    return false;
-
-  if (y < 0 || y >= ALTURA)
-    return false;
-
-  if (mapa[y][x] == 0 || mapa[y][x] == 1)
-    return false;
-
-  if (bomba_posicao[0] == y && bomba_posicao[1] == x && bomba_estado == ESTADO_ATIVA)
-    return false;
-
-  return true;
-}
-
-bool bomba_ativa(string bomba_estado)
-{
-  return bomba_estado == ESTADO_ATIVA;
-}
-
-bool todos_inimigos_morrem(bool inimigos_vivo[3])
-{
-  int contador = 0;
-  for (int i = 0; i < 3; i++)
-  {
-    if (!inimigos_vivo[i])
-      contador++;
-  }
-
-  return contador == 3;
-}
-
-/* =========================
-   LOGICA DAS ENTIDADES
-========================= */
-
-void mover_jogador(int jogador_posicao[2], int bomba_posicao[2], string bomba_estado, int mapa[ALTURA][LARGURA], int tecla)
-{
-  int x = jogador_posicao[1];
-  int y = jogador_posicao[0];
-
-  if (tecla)
-  {
-    if (tecla == 72 || tecla == 119)
-      y--;
-    if (tecla == 80 || tecla == 115)
-      y++;
-    if (tecla == 75 || tecla == 97)
-      x--;
-    if (tecla == 77 || tecla == 100)
-      x++;
-  }
-
-  if (!pode_mover(mapa, bomba_posicao, bomba_estado, x, y))
-    return;
-
-  jogador_posicao[1] = x;
-  jogador_posicao[0] = y;
-}
-
-void coloca_bomba(int jogador_posicao[2], int bomba_posicao[2], string &bomba_estado, int &bomba_tempo, int tecla)
-{
-  if (bomba_ativa(bomba_estado) || bomba_estado == ESTADO_EXPLODINDO)
-    return;
-
-  if (tecla)
-  {
-    if (tecla == 32)
-    {
-      bomba_posicao[0] = jogador_posicao[0];
-      bomba_posicao[1] = jogador_posicao[1];
-      bomba_estado = ESTADO_ATIVA;
-      bomba_tempo = GetTickCount();
-    }
-  }
-}
-
-void explodir_bomba(int mapa[ALTURA][LARGURA], int bomba_posicao[2], string &bomba_estado, int &bomba_tempo)
-{
-  int tempo_passado = GetTickCount() - bomba_tempo;
-
-  if (tempo_passado < TEMPO_BOMBA)
-    return;
-
-  int dl[5] = {0, 0, 0, 1, -1};
-  int dc[5] = {0, 1, -1, 0, 0};
-
-  for (int i = 0; i < 5; i++)
-  {
-    int l = bomba_posicao[0] + dl[i];
-    int c = bomba_posicao[1] + dc[i];
-
-    if (l < 0 || l >= ALTURA || c < 0 || c >= LARGURA)
-      continue;
-
-    if (mapa[l][c] == 0)
-      continue;
-
-    mapa[l][c] = 3;
-  }
-
-  bomba_estado = ESTADO_EXPLODINDO;
-  bomba_tempo = GetTickCount();
-}
-
-void limpar_explosao(int mapa[ALTURA][LARGURA], int bomba_posicao[2], string &bomba_estado, int &bomba_tempo)
-{
-  int tempo_passado = GetTickCount() - bomba_tempo;
-
-  if (tempo_passado < TEMPO_EXPLOSAO)
-    return;
-
-  int dl[5] = {0, 0, 0, 1, -1};
-  int dc[5] = {0, 1, -1, 0, 0};
-
-  for (int i = 0; i < 5; i++)
-  {
-    int l = bomba_posicao[0] + dl[i];
-    int c = bomba_posicao[1] + dc[i];
-
-    if (l < 0 || l >= ALTURA || c < 0 || c >= LARGURA)
-      continue;
-
-    if (mapa[l][c] == 3)
-      mapa[l][c] = 9;
-  }
-
-  bomba_estado = ESTADO_DESATIVADA;
-  bomba_tempo = 0;
-  bomba_posicao[0] = -1;
-  bomba_posicao[1] = -1;
-}
-
-/* =========================
    RENDER
 ========================= */
-
-void atualiza_jogador(int jogador_posicao[2], int bomba_posicao[2], string &bomba_estado, int &bomba_tempo, int mapa[ALTURA][LARGURA], int tecla)
-{
-  mover_jogador(jogador_posicao, bomba_posicao, bomba_estado, mapa, tecla);
-  coloca_bomba(jogador_posicao, bomba_posicao, bomba_estado, bomba_tempo, tecla);
-}
-
-void atualiza_bomba(int bomba_posicao[2], string &bomba_estado, int &bomba_tempo, int mapa[ALTURA][LARGURA])
-{
-  if (bomba_estado == ESTADO_ATIVA)
-    explodir_bomba(mapa, bomba_posicao, bomba_estado, bomba_tempo);
-
-  if (bomba_estado == ESTADO_EXPLODINDO)
-    limpar_explosao(mapa, bomba_posicao, bomba_estado, bomba_tempo);
-}
-
-void atualiza_inimigo(int inimigo_posicao[2], bool &inimigo_vivo, int mapa[ALTURA][LARGURA], int bomba_posicao[2], string bomba_estado, DWORD &tempo_inimigo)
-{
-  if (!inimigo_vivo)
-    return;
-
-  if (mapa[inimigo_posicao[0]][inimigo_posicao[1]] == 3)
-  {
-    inimigo_vivo = false;
-    return;
-  }
-
-  if (GetTickCount() - tempo_inimigo < TEMPO_INIMIGO)
-    return;
-
-  tempo_inimigo = GetTickCount();
-
-  int x = inimigo_posicao[1];
-  int y = inimigo_posicao[0];
-  int dir = rand() % 4;
-  int passos = 1 + rand() % 3;
-
-  for (int i = 0; i < passos; i++)
-  {
-    int novo_x = x;
-    int novo_y = y;
-
-    if (dir == 0)
-      novo_y--;
-    if (dir == 1)
-      novo_y++;
-    if (dir == 2)
-      novo_x--;
-    if (dir == 3)
-      novo_x++;
-
-    if (!pode_mover(mapa, bomba_posicao, bomba_estado, novo_x, novo_y))
-      break;
-
-    x = novo_x;
-    y = novo_y;
-  }
-
-  inimigo_posicao[1] = x;
-  inimigo_posicao[0] = y;
-}
-
-void verifica_mortes(int jogador_posicao[2], bool &jogador_vivo, int inimigo_posicao[2], bool &inimigo_vivo, int mapa[ALTURA][LARGURA])
-{
-  if (mapa[jogador_posicao[0]][jogador_posicao[1]] == 3)
-    jogador_vivo = false;
-
-  if (inimigo_vivo && mapa[inimigo_posicao[0]][inimigo_posicao[1]] == 3)
-    inimigo_vivo = false;
-
-  if (inimigo_vivo && inimigo_posicao[0] == jogador_posicao[0] && inimigo_posicao[1] == jogador_posicao[1])
-    jogador_vivo = false;
-}
 
 void desenhar(
     int mapa[ALTURA][LARGURA],
     int jogador_posicao[2],
-    int inimigo_posicao[3][2], bool inimigo_vivo[3],
-    int bomba_posicao[2], string bomba_estado,
+    int inimigo_posicao[2], bool inimigo_vivo,
+    int bomba_posicao[2], ESTADO_BOMBA bomba_estado,
     HANDLE out)
 {
   for (int i = 0; i < ALTURA; i++)
   {
     for (int j = 0; j < LARGURA; j++)
     {
-      bool isBomb = (bomba_posicao[0] == i && bomba_posicao[1] == j && bomba_estado == ESTADO_ATIVA);
+      bool isBomb = (bomba_posicao[0] == i && bomba_posicao[1] == j && bomba_estado == ESTADO_BOMBA::ATIVA);
       bool isPlayer = (jogador_posicao[0] == i && jogador_posicao[1] == j);
-      bool isEnemy = false;
-
-      for (int k = 0; k < 3; k++)
-      {
-        isEnemy = inimigo_posicao[k][0] == i && inimigo_posicao[k][1] == j && inimigo_vivo[k];
-        if (isEnemy)
-          break;
-      }
+      bool isEnemy = (inimigo_vivo && inimigo_posicao[0] == i && inimigo_posicao[1] == j);
 
       if (isBomb)
       {
@@ -361,25 +133,20 @@ int main()
   int jogador_posicao[2] = {1, 1};
   bool jogador_vivo = true;
 
-  int inimigo_posicao[3][2] = {
-      {1, 13},
-      {9, 13},
-      {9, 1}};
-  bool inimigo_vivo[3] = {true, true, true};
-  DWORD tempo_inimigo[3] = {GetTickCount(), GetTickCount(), GetTickCount()};
+  int inimigo_posicao[2] = {1, 13};
+  bool inimigo_vivo = true;
+  int tempo_inimigo = GetTickCount();
 
   int bomba_posicao[2] = {-1, -1};
-  string bomba_estado = ESTADO_DESATIVADA;
+  ESTADO_BOMBA bomba_estado = ESTADO_BOMBA::INATIVA;
   int bomba_tempo = 0;
 
-  const int FPS = 25;
+  const int FPS = 60;
   int tempo_por_segundo = 1000 / FPS;
 
-  while (jogador_vivo && !todos_inimigos_morrem(inimigo_vivo))
+  while (jogador_vivo)
   {
     SetConsoleCursorPosition(out, coord);
-
-    int tempo_inicio = clock();
 
     desenhar(
         mapa,
@@ -392,24 +159,24 @@ int main()
 
     atualiza_jogador(jogador_posicao, bomba_posicao, bomba_estado, bomba_tempo, mapa, tecla);
     atualiza_bomba(bomba_posicao, bomba_estado, bomba_tempo, mapa);
+    atualiza_inimigo(inimigo_posicao, inimigo_vivo, mapa, bomba_posicao, bomba_estado, tempo_inimigo);
 
-    for (int i = 0; i < 3; i++)
-    {
-      atualiza_inimigo(inimigo_posicao[i], inimigo_vivo[i], mapa, bomba_posicao, bomba_estado, tempo_inimigo[i]);
-    }
+    // logica da morte da explosao
+    if (mapa[jogador_posicao[0]][jogador_posicao[1]] == 3)
+      jogador_vivo = false;
 
-    // logica das mortes
-    for (int i = 0; i < 3; i++)
-    {
-      verifica_mortes(jogador_posicao, jogador_vivo, inimigo_posicao[i], inimigo_vivo[i], mapa);
-    }
+    if (inimigo_vivo && mapa[inimigo_posicao[0]][inimigo_posicao[1]] == 3)
+      inimigo_vivo = false;
 
-    int tempo_passado = clock() - tempo_inicio;
-    if (tempo_passado < tempo_por_segundo)
-    {
-      int tempo_adiantado = tempo_por_segundo - tempo_passado;
-      Sleep(tempo_adiantado);
-    }
+    if (inimigo_vivo && inimigo_posicao[0] == jogador_posicao[0] && inimigo_posicao[1] == jogador_posicao[1])
+      jogador_vivo = false;
+
+    if (!inimigo_vivo)
+      break;
+
+    // 30 fps / 60 fps
+    // TODO ajustar o frame por segundo
+    Sleep(tempo_por_segundo);
   }
 
   SetConsoleCursorPosition(out, coord);
@@ -421,7 +188,7 @@ int main()
       out);
 
   SetConsoleTextAttribute(out, 15);
-  if (jogador_vivo && todos_inimigos_morrem(inimigo_vivo))
+  if (jogador_vivo && !inimigo_vivo)
     cout << "\nVOCE VENCEU!\n";
   else
     cout << "\nVOCE PERDEU!\n";
