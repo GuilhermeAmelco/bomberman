@@ -28,6 +28,11 @@ ESTADO_JOGO estado_jogando(
 
   int tecla = escuta_tecla();
 
+  if (tecla == 27)
+  {
+    return menu_loop(MENU_PAUSE);
+  }
+
   atualiza_jogador(jogador, bomba, mapa, tecla);
 
   atualiza_bomba(bomba, mapa);

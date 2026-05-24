@@ -10,11 +10,11 @@
 
 enum ESTADO_JOGO
 {
-  MENU,
-  JOGANDO,
-  VITORIA,
-  DERROTA,
-  SAIR
+    MENU,
+    JOGANDO,
+    VITORIA,
+    DERROTA,
+    SAIR
 };
 
 ESTADO_JOGO estado_menu();
@@ -39,3 +39,15 @@ ESTADO_JOGO estado_derrota(
     Inimigo inimigo,
     Bomba bomba,
     HANDLE out);
+
+enum TIPO_MENU
+{
+    MENU_INICIAL,
+    MENU_PAUSE,
+    MENU_FINAL
+};
+
+ESTADO_JOGO estado_menu();
+
+ESTADO_JOGO menu_loop(
+    TIPO_MENU tipo);
