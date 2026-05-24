@@ -1,6 +1,8 @@
 #include <iostream>
 #include <windows.h>
 #include "../config/regras.h"
+#include "./player.h"
+#include "./bomba.h"
 
 using namespace std;
 
@@ -45,8 +47,8 @@ void coloca_bomba(int jogador_posicao[2], int bomba_posicao[2], ESTADO_BOMBA &bo
   }
 }
 
-void atualiza_jogador(int jogador_posicao[2], int bomba_posicao[2], ESTADO_BOMBA &bomba_estado, int &bomba_tempo, int mapa[ALTURA][LARGURA], int tecla)
+void atualiza_jogador(Jogador &jogador, Bomba &bomba, int mapa[ALTURA][LARGURA], int tecla)
 {
-  mover_jogador(jogador_posicao, bomba_posicao, bomba_estado, mapa, tecla);
-  coloca_bomba(jogador_posicao, bomba_posicao, bomba_estado, bomba_tempo, tecla);
+  mover_jogador(jogador.posicao, bomba.posicao, bomba.estado, mapa, tecla);
+  coloca_bomba(jogador.posicao, bomba.posicao, bomba.estado, bomba.tempo, tecla);
 }

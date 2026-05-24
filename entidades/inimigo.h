@@ -1,16 +1,20 @@
-#include "../config/config.h"
-
 #ifndef INIMIGO_H
 #define INIMIGO_H
+
+#include "../config/config.h"
+#include "./bomba.h"
+#include <windows.h>
 
 extern const int LARGURA;
 extern const int ALTURA;
 
 struct Inimigo
 {
-  int x, y;
+  int posicao[2] = {1, 13};
+  bool vivo = true;
+  int tempo = GetTickCount();
 };
 
-void atualiza_inimigo(int inimigo_posicao[2], bool &inimigo_vivo, int mapa[ALTURA][LARGURA], int bomba_posicao[2], ESTADO_BOMBA bomba_estado, int &tempo_inimigo);
+void atualiza_inimigo(Inimigo &inimigo, Bomba bomba, int mapa[ALTURA][LARGURA]);
 
 #endif

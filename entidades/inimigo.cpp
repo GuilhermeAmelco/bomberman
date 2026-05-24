@@ -1,27 +1,29 @@
 #include <iostream>
 #include <windows.h>
 #include "../config/regras.h"
+#include "./inimigo.h"
+#include "./bomba.h"
 
 using namespace std;
 
-void atualiza_inimigo(int inimigo_posicao[2], bool &inimigo_vivo, int mapa[ALTURA][LARGURA], int bomba_posicao[2], ESTADO_BOMBA bomba_estado, int &tempo_inimigo)
+void atualiza_inimigo(Inimigo &inimigo, Bomba bomba, int mapa[ALTURA][LARGURA])
 {
-  if (!inimigo_vivo)
+  if (!inimigo.vivo)
     return;
 
-  if (mapa[inimigo_posicao[0]][inimigo_posicao[1]] == 3)
+  if (mapa[inimigo.posicao[0]][inimigo.posicao[1]] == 3)
   {
-    inimigo_vivo = false;
+    inimigo.vivo = false;
     return;
   }
 
-  if (GetTickCount() - tempo_inimigo < TEMPO_INIMIGO)
+  if (GetTickCount() - inimigo.tempo < TEMPO_INIMIGO)
     return;
 
-  tempo_inimigo = GetTickCount();
+  inimigo.tempo = GetTickCount();
 
-  int x = inimigo_posicao[1];
-  int y = inimigo_posicao[0];
+  int x = inimigo.posicao[1];
+  int y = inimigo.posicao[0];
   int dir = rand() % 4;
   int passos = 1 + rand() % 3;
 
@@ -39,13 +41,13 @@ void atualiza_inimigo(int inimigo_posicao[2], bool &inimigo_vivo, int mapa[ALTUR
     if (dir == 3)
       novo_x++;
 
-    if (!pode_mover(mapa, bomba_posicao, bomba_estado, novo_x, novo_y))
+    if (!pode_mover(mapa, bomba.posicao, bomba.estado, novo_x, novo_y))
       break;
 
     x = novo_x;
     y = novo_y;
   }
 
-  inimigo_posicao[1] = x;
-  inimigo_posicao[0] = y;
+  inimigo.posicao[1] = x;
+  inimigo.posicao[0] = y;
 }

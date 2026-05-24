@@ -18,7 +18,17 @@ MAPA (valores):
 3 - explosao
 4 - inimigo
 5 - personagem
+9 - vazio
 */
+
+enum ESTADO_JOGO
+{
+  MENU,
+  JOGANDO,
+  VITORIA,
+  DERROTA,
+  SAIR
+};
 
 /* =========================
    INPUT
@@ -38,18 +48,28 @@ int escuta_tecla()
 
 void desenhar(
     int mapa[ALTURA][LARGURA],
-    int jogador_posicao[2],
-    int inimigo_posicao[2], bool inimigo_vivo,
-    int bomba_posicao[2], ESTADO_BOMBA bomba_estado,
+    Jogador jogador,
+    Inimigo inimigo,
+    Bomba bomba,
     HANDLE out)
 {
   for (int i = 0; i < ALTURA; i++)
   {
     for (int j = 0; j < LARGURA; j++)
     {
-      bool isBomb = (bomba_posicao[0] == i && bomba_posicao[1] == j && bomba_estado == ESTADO_BOMBA::ATIVA);
-      bool isPlayer = (jogador_posicao[0] == i && jogador_posicao[1] == j);
-      bool isEnemy = (inimigo_vivo && inimigo_posicao[0] == i && inimigo_posicao[1] == j);
+      bool isBomb =
+          bomba.estado == ESTADO_BOMBA::ATIVA &&
+          bomba.posicao[0] == i &&
+          bomba.posicao[1] == j;
+
+      bool isPlayer =
+          jogador.posicao[0] == i &&
+          jogador.posicao[1] == j;
+
+      bool isEnemy =
+          inimigo.vivo &&
+          inimigo.posicao[0] == i &&
+          inimigo.posicao[1] == j;
 
       if (isBomb)
       {
@@ -72,28 +92,30 @@ void desenhar(
         continue;
       }
 
-      int valor = mapa[i][j];
-
-      switch (valor)
+      switch (mapa[i][j])
       {
       case 0:
         SetConsoleTextAttribute(out, 3);
         cout << BLOCO << BLOCO;
         break;
+
       case 1:
         SetConsoleTextAttribute(out, 6);
         cout << BLOCO_CLARO << BLOCO_CLARO;
         break;
+
       case 3:
         SetConsoleTextAttribute(out, 12);
         cout << BLOCO << BLOCO;
         break;
+
       case 9:
         SetConsoleTextAttribute(out, 0);
         cout << BLOCO << BLOCO;
         break;
       }
     }
+
     cout << endl;
   }
 }
@@ -110,6 +132,7 @@ int main()
 
   CONSOLE_CURSOR_INFO cursorInfo;
   GetConsoleCursorInfo(out, &cursorInfo);
+
   cursorInfo.bVisible = false;
   SetConsoleCursorInfo(out, &cursorInfo);
 
@@ -130,74 +153,133 @@ int main()
       {0, 9, 9, 1, 9, 9, 9, 9, 9, 1, 9, 9, 9, 9, 0},
       {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
-  int jogador_posicao[2] = {1, 1};
-  bool jogador_vivo = true;
+  Jogador Jogador;
+  Inimigo Inimigo;
+  Bomba Bomba;
 
-  int inimigo_posicao[2] = {1, 13};
-  bool inimigo_vivo = true;
-  int tempo_inimigo = GetTickCount();
+  ESTADO_JOGO estado = MENU;
 
-  int bomba_posicao[2] = {-1, -1};
-  ESTADO_BOMBA bomba_estado = ESTADO_BOMBA::INATIVA;
-  int bomba_tempo = 0;
-
-  const int FPS = 60;
-  int tempo_por_segundo = 1000 / FPS;
-
-  while (jogador_vivo)
+  while (estado != SAIR)
   {
     SetConsoleCursorPosition(out, coord);
 
-    desenhar(
-        mapa,
-        jogador_posicao,
-        inimigo_posicao, inimigo_vivo,
-        bomba_posicao, bomba_estado,
-        out);
+    switch (estado)
+    {
+    case MENU:
+    {
+      SetConsoleTextAttribute(out, 15);
 
-    int tecla = escuta_tecla();
+      cout << "===== BOMBERMAN =====\n";
+      cout << "1 - Jogar\n";
+      cout << "2 - Sair\n";
 
-    atualiza_jogador(jogador_posicao, bomba_posicao, bomba_estado, bomba_tempo, mapa, tecla);
-    atualiza_bomba(bomba_posicao, bomba_estado, bomba_tempo, mapa);
-    atualiza_inimigo(inimigo_posicao, inimigo_vivo, mapa, bomba_posicao, bomba_estado, tempo_inimigo);
+      int tecla = _getch();
 
-    // logica da morte da explosao
-    if (mapa[jogador_posicao[0]][jogador_posicao[1]] == 3)
-      jogador_vivo = false;
+      if (tecla == '1')
+      {
+        estado = JOGANDO;
+      }
+      else if (tecla == '2')
+      {
+        estado = SAIR;
+      }
 
-    if (inimigo_vivo && mapa[inimigo_posicao[0]][inimigo_posicao[1]] == 3)
-      inimigo_vivo = false;
-
-    if (inimigo_vivo && inimigo_posicao[0] == jogador_posicao[0] && inimigo_posicao[1] == jogador_posicao[1])
-      jogador_vivo = false;
-
-    if (!inimigo_vivo)
       break;
+    }
 
-    // 30 fps / 60 fps
-    // TODO ajustar o frame por segundo
-    Sleep(tempo_por_segundo);
+    case JOGANDO:
+    {
+      desenhar(
+          mapa,
+          Jogador,
+          Inimigo,
+          Bomba,
+          out);
+
+      int tecla = escuta_tecla();
+
+      atualiza_jogador(Jogador, Bomba, mapa, tecla);
+      atualiza_bomba(Bomba, mapa);
+      atualiza_inimigo(Inimigo, Bomba, mapa);
+
+      // jogador morreu pela explosao
+      if (mapa[Jogador.posicao[0]][Jogador.posicao[1]] == 3)
+      {
+        Jogador.vivo = false;
+      }
+
+      // inimigo morreu pela explosao
+      if (Inimigo.vivo &&
+          mapa[Inimigo.posicao[0]][Inimigo.posicao[1]] == 3)
+      {
+        Inimigo.vivo = false;
+      }
+
+      // inimigo encostou no jogador
+      if (Inimigo.vivo &&
+          Inimigo.posicao[0] == Jogador.posicao[0] &&
+          Inimigo.posicao[1] == Jogador.posicao[1])
+      {
+        Jogador.vivo = false;
+      }
+
+      // troca de estados
+      if (!Jogador.vivo)
+      {
+        estado = DERROTA;
+      }
+
+      if (!Inimigo.vivo)
+      {
+        estado = VITORIA;
+      }
+
+      break;
+    }
+
+    case VITORIA:
+    {
+      desenhar(
+          mapa,
+          Jogador,
+          Inimigo,
+          Bomba,
+          out);
+
+      SetConsoleTextAttribute(out, 10);
+
+      cout << "\nVOCE VENCEU!\n";
+      cout << "Pressione qualquer tecla para sair...";
+
+      _getch();
+
+      estado = SAIR;
+
+      break;
+    }
+
+    case DERROTA:
+    {
+      desenhar(
+          mapa,
+          Jogador,
+          Inimigo,
+          Bomba,
+          out);
+
+      SetConsoleTextAttribute(out, 12);
+
+      cout << "\nVOCE PERDEU!\n";
+      cout << "Pressione qualquer tecla para sair...";
+
+      _getch();
+
+      estado = SAIR;
+
+      break;
+    }
+    }
   }
-
-  SetConsoleCursorPosition(out, coord);
-  desenhar(
-      mapa,
-      jogador_posicao,
-      inimigo_posicao, inimigo_vivo,
-      bomba_posicao, bomba_estado,
-      out);
-
-  SetConsoleTextAttribute(out, 15);
-  if (jogador_vivo && !inimigo_vivo)
-    cout << "\nVOCE VENCEU!\n";
-  else
-    cout << "\nVOCE PERDEU!\n";
-
-  while (_kbhit())
-    _getch();
-
-  cout << "Pressione qualquer tecla para sair...";
-  _getch();
 
   return 0;
 }

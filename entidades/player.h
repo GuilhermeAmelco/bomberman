@@ -2,11 +2,12 @@
 #define PLAYER_H
 
 #include "../config/config.h"
+#include "./bomba.h"
 
 struct Jogador
 {
-  int x = 1, y = 1;
-  bool vivo = true;
+    int posicao[2] = {1, 1};
+    bool vivo = true;
 };
 
 void mover_jogador(
@@ -24,11 +25,6 @@ void coloca_bomba(
     int tecla);
 
 void atualiza_jogador(
-    int jogador_posicao[2],
-    int bomba_posicao[2],
-    ESTADO_BOMBA &bomba_estado,
-    int &bomba_tempo,
-    int mapa[ALTURA][LARGURA],
-    int tecla);
+    Jogador &jogador, Bomba &bomba, int mapa[ALTURA][LARGURA], int tecla);
 
 #endif

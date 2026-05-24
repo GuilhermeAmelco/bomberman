@@ -1,6 +1,7 @@
 #include <iostream>
 #include <windows.h>
 #include "../config/regras.h"
+#include "./bomba.h"
 
 using namespace std;
 
@@ -60,11 +61,11 @@ void limpar_explosao(int mapa[ALTURA][LARGURA], int bomba_posicao[2], ESTADO_BOM
   bomba_posicao[1] = -1;
 }
 
-void atualiza_bomba(int bomba_posicao[2], ESTADO_BOMBA &bomba_estado, int &bomba_tempo, int mapa[ALTURA][LARGURA])
+void atualiza_bomba(Bomba &bomba, int mapa[ALTURA][LARGURA])
 {
-  if (bomba_estado == ESTADO_BOMBA::ATIVA)
-    explodir_bomba(mapa, bomba_posicao, bomba_estado, bomba_tempo);
+  if (bomba.estado == ESTADO_BOMBA::ATIVA)
+    explodir_bomba(mapa, bomba.posicao, bomba.estado, bomba.tempo);
 
-  if (bomba_estado == ESTADO_BOMBA::EXPLODINDO)
-    limpar_explosao(mapa, bomba_posicao, bomba_estado, bomba_tempo);
+  if (bomba.estado == ESTADO_BOMBA::EXPLODINDO)
+    limpar_explosao(mapa, bomba.posicao, bomba.estado, bomba.tempo);
 }
