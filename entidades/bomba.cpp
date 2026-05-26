@@ -64,8 +64,11 @@ void limpar_explosao(int mapa[ALTURA][LARGURA], int bomba_posicao[2], ESTADO_BOM
 void atualiza_bomba(Bomba &bomba, int mapa[ALTURA][LARGURA])
 {
   if (bomba.estado == ESTADO_BOMBA::ATIVA)
+  {
     explodir_bomba(mapa, bomba.posicao, bomba.estado, bomba.tempo);
-
-  if (bomba.estado == ESTADO_BOMBA::EXPLODINDO)
+  }
+  else if (bomba.estado == ESTADO_BOMBA::EXPLODINDO)
+  {
     limpar_explosao(mapa, bomba.posicao, bomba.estado, bomba.tempo);
+  }
 }

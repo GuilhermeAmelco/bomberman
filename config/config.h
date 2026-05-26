@@ -12,6 +12,7 @@ const int ALTURA = 11;
 const int TEMPO_BOMBA = 3000;
 const int TEMPO_EXPLOSAO = 500;
 const int TEMPO_INIMIGO = 500;
+const int MAX_INIMIGOS = 7;
 
 enum class ESTADO_BOMBA
 {
@@ -19,5 +20,7 @@ enum class ESTADO_BOMBA
   INATIVA,
   EXPLODINDO
 };
+
+extern bool modo_multiplayer;
 
 #endif

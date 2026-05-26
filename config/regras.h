@@ -2,6 +2,7 @@
 #define REGRAS_H
 
 #include "./config.h"
+#include "../entidades/bomba.h"
 
 using namespace std;
 
@@ -10,8 +11,7 @@ extern const int ALTURA;
 
 bool pode_mover(
     int mapa[ALTURA][LARGURA],
-    int bomba_posicao[2],
-    ESTADO_BOMBA bomba_estado,
+    Bomba bombas[2],
     int x,
     int y);
 

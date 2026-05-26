@@ -8,23 +8,22 @@ struct Jogador
 {
     int posicao[2] = {1, 1};
     bool vivo = true;
+    int tempo_movimento = 0;
 };
 
 void mover_jogador(
-    int jogador_posicao[2],
-    int bomba_posicao[2],
-    ESTADO_BOMBA bomba_estado,
+    Jogador &jogador,
+    Bomba bombas[2],
     int mapa[ALTURA][LARGURA],
-    int tecla);
+    int id);
 
 void coloca_bomba(
-    int jogador_posicao[2],
-    int bomba_posicao[2],
-    ESTADO_BOMBA &bomba_estado,
-    int &bomba_tempo,
-    int tecla);
+    Jogador &jogador,
+    Bomba &bomba,
+    int tecla,
+    int id);
 
 void atualiza_jogador(
-    Jogador &jogador, Bomba &bomba, int mapa[ALTURA][LARGURA], int tecla);
+    Jogador &jogador, Bomba bombas[2], int mapa[ALTURA][LARGURA], int tecla, int id);
 
 #endif

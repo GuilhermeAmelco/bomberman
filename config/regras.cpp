@@ -3,8 +3,7 @@
 
 bool pode_mover(
     int mapa[ALTURA][LARGURA],
-    int bomba_posicao[2],
-    ESTADO_BOMBA bomba_estado,
+    Bomba bombas[2],
     int x,
     int y)
 {
@@ -17,12 +16,14 @@ bool pode_mover(
   if (mapa[y][x] == 0 || mapa[y][x] == 1)
     return false;
 
-  if (
-      bomba_posicao[0] == y &&
-      bomba_posicao[1] == x &&
-      bomba_estado == ESTADO_BOMBA::ATIVA)
+  for (int i = 0; i < 2; i++)
   {
-    return false;
+    if (bombas[i].posicao[0] == y &&
+        bombas[i].posicao[1] == x &&
+        bombas[i].estado == ESTADO_BOMBA::ATIVA)
+    {
+      return false;
+    }
   }
 
   return true;
@@ -30,5 +31,5 @@ bool pode_mover(
 
 bool bomba_ativa(ESTADO_BOMBA bomba_estado)
 {
-  return bomba_estado == ESTADO_BOMBA::ATIVA;
+  return bomba_estado != ESTADO_BOMBA::INATIVA;
 }

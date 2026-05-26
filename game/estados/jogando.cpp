@@ -1,70 +1,81 @@
 #include "estados.h"
-
 #include "../../render/render.h"
-
 #include <conio.h>
-
-int escuta_tecla()
-{
-  if (_kbhit())
-    return _getch();
-
-  return -1;
-}
 
 ESTADO_JOGO estado_jogando(
     int mapa[ALTURA][LARGURA],
-    Jogador &jogador,
-    Inimigo &inimigo,
-    Bomba &bomba,
+    Jogador jogadores[2],
+    Inimigo inimigos[],
+    Bomba bombas[2],
     HANDLE out)
 {
-  desenhar(
-      mapa,
-      jogador,
-      inimigo,
-      bomba,
-      out);
+  desenhar(mapa, jogadores, inimigos, bombas, out);
 
-  int tecla = escuta_tecla();
+  int tecla_bomba = -1;
 
-  if (tecla == 27)
+  // Limpa todo o buffer de teclas pendentes no frame para não dar delay
+  while (_kbhit())
   {
-    return menu_loop(MENU_PAUSE);
+    int t = _getch();
+    if (t == 27)
+      return menu_loop(MENU_PAUSE);
+
+    // Filtra para pegar apenas as teclas que usamos para plantar bomba
+    if (t == 32 || t == 135 || t == 128 || t == 199 || t == 231 || t == 'c' || t == 'C')
+    {
+      tecla_bomba = t;
+    }
   }
 
-  atualiza_jogador(jogador, bomba, mapa, tecla);
-
-  atualiza_bomba(bomba, mapa);
-
-  atualiza_inimigo(inimigo, bomba, mapa);
-
-  // jogador morreu pela explosao
-  if (mapa[jogador.posicao[0]][jogador.posicao[1]] == 3)
+  for (int i = 0; i < 2; i++)
   {
-    jogador.vivo = false;
+    if (jogadores[i].vivo)
+    {
+      atualiza_jogador(jogadores[i], bombas, mapa, tecla_bomba, i);
+      atualiza_bomba(bombas[i], mapa);
+
+      if (mapa[jogadores[i].posicao[0]][jogadores[i].posicao[1]] == 3)
+      {
+        jogadores[i].vivo = false;
+      }
+    }
   }
 
-  // inimigo morreu pela explosao
-  if (inimigo.vivo &&
-      mapa[inimigo.posicao[0]][inimigo.posicao[1]] == 3)
+  bool algum_inimigo_vivo = false;
+
+  for (int i = 0; i < MAX_INIMIGOS; i++)
   {
-    inimigo.vivo = false;
+    if (!inimigos[i].vivo)
+      continue;
+
+    algum_inimigo_vivo = true;
+
+    atualiza_inimigo(inimigos[i], bombas, mapa, jogadores[0]);
+
+    for (int j = 0; j < 2; j++)
+    {
+      if (jogadores[j].vivo && inimigos[i].vivo &&
+          inimigos[i].posicao[0] == jogadores[j].posicao[0] &&
+          inimigos[i].posicao[1] == jogadores[j].posicao[1])
+      {
+        jogadores[j].vivo = false;
+      }
+    }
   }
 
-  // inimigo encostou no jogador
-  if (inimigo.vivo &&
-      inimigo.posicao[0] == jogador.posicao[0] &&
-      inimigo.posicao[1] == jogador.posicao[1])
-  {
-    jogador.vivo = false;
-  }
+  bool todos_mortos = (!jogadores[0].vivo && (!modo_multiplayer || !jogadores[1].vivo));
 
-  if (!jogador.vivo)
+  if (todos_mortos)
+  {
+    pontuacao_atual = 50 * (dificuldade_atual + 1);
     return DERROTA;
+  }
 
-  if (!inimigo.vivo)
+  if (!algum_inimigo_vivo)
+  {
+    pontuacao_atual = 1000 * (dificuldade_atual + 1);
     return VITORIA;
+  }
 
   return JOGANDO;
 }
